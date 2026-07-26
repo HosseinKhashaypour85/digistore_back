@@ -1,0 +1,1325 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>DigiStore Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/tabler-icons.min.css">
+    <style>
+        :root {
+            --canvas: #f5f7f4;
+            --surface: #ffffff;
+            --ink: #171b18;
+            --muted: #66706a;
+            --subtle: #8b948f;
+            --line: #d9ded9;
+            --line-strong: #c4ccc6;
+            --primary: #0f9f78;
+            --primary-dark: #087457;
+            --primary-soft: #ddf5ec;
+            --danger: #e34b6a;
+            --danger-soft: #fff0f3;
+            --warning: #a86618;
+            --warning-soft: #fff8e8;
+            --shadow: 0 12px 34px rgba(23, 27, 24, 0.06);
+            --radius: 14px;
+            --font-ltr: "Inter", system-ui, sans-serif;
+            --font-rtl: "Vazirmatn", Tahoma, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: var(--canvas);
+            color: var(--ink);
+            font-family: var(--font-ltr);
+            line-height: 1.5;
+        }
+        html[dir="rtl"] body { font-family: var(--font-rtl); }
+        button, input, textarea { font: inherit; }
+        button { cursor: pointer; }
+        button:disabled { cursor: not-allowed; opacity: 0.62; }
+        a { color: inherit; }
+        ::selection { background: var(--primary-soft); color: var(--primary-dark); }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            min-height: 72px;
+            padding: 12px clamp(18px, 4vw, 56px);
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid var(--line);
+            backdrop-filter: blur(12px);
+        }
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-width: max-content;
+            text-decoration: none;
+        }
+        .brand-mark {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: var(--ink);
+            color: var(--primary-soft);
+        }
+        .brand-copy { display: grid; gap: 0; }
+        .brand-name { font-size: 13px; font-weight: 700; letter-spacing: -0.02em; }
+        .brand-subtitle { color: var(--muted); font-size: 10px; }
+        .main-nav {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .main-nav::-webkit-scrollbar { display: none; }
+        .nav-link {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 44px;
+            padding: 0 13px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 160ms ease;
+        }
+        .nav-link::after {
+            position: absolute;
+            right: 12px;
+            bottom: -13px;
+            left: 12px;
+            height: 2px;
+            background: transparent;
+            content: "";
+        }
+        .nav-link:hover, .nav-link:focus-visible { color: var(--ink); }
+        .nav-link.is-active { color: var(--primary-dark); }
+        .nav-link.is-active::after { background: var(--primary); }
+        .topbar-actions { display: flex; align-items: center; gap: 8px; min-width: max-content; }
+        .language-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 3px;
+            background: var(--canvas);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+        }
+        .language-button {
+            min-width: 35px;
+            min-height: 32px;
+            padding: 0 8px;
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .language-button.is-active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(23, 27, 24, 0.1); }
+        .status-pill, .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 32px;
+            padding: 0 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .status-pill { background: var(--primary-soft); color: var(--primary-dark); }
+        .status-pill::before, .status-badge::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+        .status-badge.active { background: var(--primary-soft); color: var(--primary-dark); }
+        .status-badge.paused { background: #eef0ef; color: var(--muted); }
+        .status-badge.unavailable { background: var(--warning-soft); color: var(--warning); }
+
+        .page {
+            width: min(1360px, 100%);
+            margin: 0 auto;
+            padding: clamp(28px, 5vw, 68px) clamp(18px, 4vw, 56px) 34px;
+        }
+        .page-intro {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 24px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--line);
+        }
+        .eyebrow {
+            margin: 0 0 8px;
+            color: var(--primary-dark);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        html[dir="rtl"] .eyebrow { letter-spacing: 0; }
+        h1, h2, h3, p { margin-top: 0; }
+        h1 {
+            max-width: 760px;
+            margin-bottom: 9px;
+            font-size: clamp(28px, 4vw, 48px);
+            line-height: 1.1;
+            letter-spacing: -0.055em;
+        }
+        html[dir="rtl"] h1, html[dir="rtl"] h2, html[dir="rtl"] h3 { letter-spacing: 0; }
+        .page-subtitle { max-width: 680px; margin-bottom: 0; color: var(--muted); font-size: 14px; }
+        .intro-actions { display: grid; justify-items: end; gap: 10px; }
+        .sync-note { color: var(--muted); font-size: 11px; }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 0 15px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 700;
+            transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+        }
+        .button:hover { transform: translateY(-1px); }
+        .button-primary { background: var(--primary); color: #fff; }
+        .button-primary:hover { background: var(--primary-dark); }
+        .button-secondary { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
+        .button-secondary:hover { border-color: var(--primary); color: var(--primary-dark); }
+        .button-danger { background: var(--danger); color: #fff; }
+        .button-danger:hover { background: #c83857; }
+        .button-full { width: 100%; }
+        .icon-button {
+            display: inline-grid;
+            place-items: center;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: var(--surface);
+            color: var(--muted);
+        }
+        .icon-button:hover { color: var(--primary-dark); border-color: var(--primary); }
+        .icon-button.danger { color: var(--danger); border-color: #f3c6ce; background: var(--danger-soft); }
+        .icon-button.danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .button:focus-visible, .icon-button:focus-visible, .language-button:focus-visible, .nav-link:focus-visible, input:focus-visible, textarea:focus-visible {
+            outline: 3px solid rgba(15, 159, 120, 0.24);
+            outline-offset: 2px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 22px 0 28px;
+        }
+        .metric {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 88px;
+            gap: 20px;
+            padding: 17px 20px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--primary);
+            border-radius: 10px;
+        }
+        html[dir="rtl"] .metric { border-right: 3px solid var(--primary); border-left: 1px solid var(--line); }
+        .metric.warning { border-left-color: var(--warning); }
+        html[dir="rtl"] .metric.warning { border-right-color: var(--warning); }
+        .metric-label { margin: 0 0 4px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+        html[dir="rtl"] .metric-label { letter-spacing: 0; }
+        .metric-value { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.04em; }
+        .metric-detail { color: var(--primary-dark); font-size: 11px; font-weight: 600; text-align: end; }
+        .metric.warning .metric-detail { color: var(--warning); }
+
+        .content-section { scroll-margin-top: 96px; margin-top: 28px; }
+        .section-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+        .section-heading h2 { margin-bottom: 5px; font-size: 23px; letter-spacing: -0.04em; }
+        .section-description { margin-bottom: 0; color: var(--muted); font-size: 12px; }
+        .section-tools { display: flex; align-items: center; gap: 8px; }
+        .endpoint { direction: ltr; text-align: left; color: var(--muted); font-family: "DM Mono", ui-monospace, monospace; font-size: 10px; }
+        .endpoint-badge { display: inline-flex; align-items: center; min-height: 27px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--canvas); }
+        .section-layout { display: grid; grid-template-columns: minmax(240px, 0.34fr) minmax(0, 0.66fr); gap: 14px; }
+        .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+        .panel-header { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 19px 21px; border-bottom: 1px solid var(--line); }
+        .panel-title { margin-bottom: 3px; font-size: 15px; font-weight: 700; }
+        .panel-copy { margin-bottom: 0; color: var(--muted); font-size: 11px; }
+        .panel-body { padding: 20px 21px; }
+        .form-grid { display: grid; gap: 14px; }
+        .field { display: grid; gap: 6px; }
+        .field label { font-size: 11px; font-weight: 700; }
+        .required { color: var(--danger); }
+        .field input, .field textarea, .search-input {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid var(--line-strong);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--ink);
+            font-size: 12px;
+            transition: border-color 160ms ease, box-shadow 160ms ease;
+        }
+        .field textarea { min-height: 104px; resize: vertical; }
+        .field input:hover, .field textarea:hover, .search-input:hover { border-color: var(--primary); }
+        .field input::placeholder, .field textarea::placeholder, .search-input::placeholder { color: #a0a8a3; }
+        .field-help { margin: -1px 0 0; color: var(--muted); font-size: 10px; }
+        .form-actions { display: grid; gap: 9px; margin-top: 4px; }
+        .form-note { margin: 0; color: var(--muted); font-size: 10px; text-align: center; }
+        .table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+        .table-toolbar-actions { display: flex; align-items: center; gap: 8px; }
+        .search-wrap { position: relative; min-width: min(210px, 40vw); }
+        .search-wrap .ti { position: absolute; top: 50%; left: 11px; color: var(--muted); transform: translateY(-50%); }
+        html[dir="rtl"] .search-wrap .ti { right: 11px; left: auto; }
+        .search-input { min-height: 36px; padding-left: 32px; }
+        html[dir="rtl"] .search-input { padding-right: 32px; padding-left: 12px; }
+        .checkbox-control { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+        .checkbox-control input { accent-color: var(--primary); }
+        .table-scroll { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 680px; }
+        th, td { padding: 14px 18px; border-bottom: 1px solid #edf0ed; text-align: start; vertical-align: middle; }
+        th { background: #fbfcfb; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+        html[dir="rtl"] th { letter-spacing: 0; }
+        td { color: var(--ink); font-size: 12px; }
+        tbody tr:hover { background: #fbfdfb; }
+        .code-value { direction: ltr; font-family: "DM Mono", ui-monospace, monospace; font-size: 11px; font-weight: 700; text-align: start; }
+        .muted-cell { color: var(--muted); }
+        .table-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; color: var(--muted); font-size: 10px; }
+        .empty-state, .loading-state { padding: 32px 20px; color: var(--muted); font-size: 12px; text-align: center; }
+        .empty-state .ti, .loading-state .ti { display: block; margin-bottom: 8px; color: var(--primary); font-size: 20px; }
+
+        .messages-alert {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding: 14px 16px;
+            border: 1px solid #edc6cf;
+            border-radius: 10px;
+            background: var(--danger-soft);
+            color: #8d3048;
+        }
+        .alert-icon { display: grid; place-items: center; flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px; background: #ffdce4; color: var(--danger); }
+        .alert-title { margin: 0 0 3px; font-size: 12px; font-weight: 700; }
+        .alert-copy { margin: 0; font-size: 11px; }
+        .operation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .operation-card { display: flex; flex-direction: column; min-width: 0; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+        .operation-card.danger { border-color: #edc6cf; }
+        .operation-card-header { display: flex; align-items: start; justify-content: space-between; gap: 12px; min-height: 56px; margin-bottom: 15px; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+        .operation-verb { margin-bottom: 4px; color: var(--primary-dark); font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+        html[dir="rtl"] .operation-verb { letter-spacing: 0; }
+        .danger .operation-verb { color: var(--danger); }
+        .operation-title { margin: 0; font-size: 15px; }
+        .operation-card .form-actions { margin-top: auto; padding-top: 18px; }
+        .location-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .probe-card { min-width: 0; padding: 19px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+        .probe-header { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .probe-title-row { display: flex; align-items: center; gap: 9px; }
+        .probe-icon { display: grid; place-items: center; width: 31px; height: 31px; border-radius: 8px; background: var(--primary-soft); color: var(--primary-dark); }
+        .probe-title { margin: 0; font-size: 14px; }
+        .probe-subtitle { margin: 2px 0 0; color: var(--muted); font-size: 10px; }
+        .response-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 15px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+        .response-item { min-width: 0; }
+        .response-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+        html[dir="rtl"] .response-label { letter-spacing: 0; }
+        .response-value { display: block; min-height: 20px; overflow-wrap: anywhere; color: var(--ink); font-size: 12px; font-weight: 600; }
+        .response-value.endpoint-value { direction: ltr; font-family: "DM Mono", ui-monospace, monospace; font-size: 10px; text-align: start; }
+        .probe-message { min-height: 63px; margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--primary-soft); color: var(--primary-dark); font-size: 11px; }
+        .probe-message[dir="auto"] { text-align: start; }
+        .probe-footer { display: flex; justify-content: end; margin-top: 14px; }
+        .feedback {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 30;
+            display: grid;
+            gap: 3px;
+            max-width: min(360px, calc(100vw - 40px));
+            padding: 13px 15px;
+            border: 1px solid var(--line-strong);
+            border-radius: 10px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 160ms ease, transform 160ms ease;
+        }
+        html[dir="rtl"] .feedback { right: auto; left: 20px; }
+        .feedback.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .feedback.success { border-color: #a9dfca; }
+        .feedback.error { border-color: #edc6cf; }
+        .feedback-title { margin: 0; font-size: 12px; font-weight: 700; }
+        .feedback-copy { margin: 0; color: var(--muted); font-size: 11px; }
+        footer { display: flex; justify-content: space-between; gap: 18px; padding-top: 28px; color: var(--muted); font-size: 10px; }
+
+        @media (max-width: 1050px) {
+            .topbar { flex-wrap: wrap; gap: 8px 18px; }
+            .main-nav { order: 3; flex-basis: 100%; }
+            .nav-link::after { bottom: -1px; }
+            .section-layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 760px) {
+            .page-intro, .section-heading { align-items: start; flex-direction: column; }
+            .intro-actions { justify-items: start; }
+            html[dir="rtl"] .intro-actions { justify-items: start; }
+            .metric-grid, .operation-grid, .location-grid { grid-template-columns: 1fr; }
+            .table-toolbar { align-items: stretch; flex-direction: column; }
+            .table-toolbar-actions { justify-content: space-between; }
+            .search-wrap { min-width: 0; flex: 1; }
+            .section-tools { flex-wrap: wrap; }
+            footer { flex-direction: column; }
+        }
+        @media (max-width: 520px) {
+            .topbar { padding: 10px 14px; }
+            .topbar-actions { width: 100%; justify-content: space-between; }
+            .page { padding: 26px 14px 28px; }
+            h1 { font-size: 31px; }
+            .metric { min-height: 78px; padding: 14px 15px; }
+            .panel-header, .panel-body, .operation-card, .probe-card { padding: 16px; }
+            .table-toolbar-actions { align-items: stretch; flex-direction: column; }
+            .checkbox-control { min-height: 36px; }
+        }
+
+        .auth-section {
+            display: grid;
+            place-items: center;
+            min-height: calc(100vh - 72px);
+            padding: 40px clamp(18px, 4vw, 56px);
+        }
+        .auth-card {
+            width: min(400px, 100%);
+            padding: 28px 24px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .auth-card h2 {
+            margin: 0 0 6px;
+            font-size: 20px;
+            letter-spacing: -0.04em;
+        }
+        .auth-card p {
+            margin: 0 0 18px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+        .auth-card .form-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .logout-button {
+            gap: 6px;
+            padding: 0 10px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: var(--surface);
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .logout-button:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: var(--danger-soft);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="brand" href="#overview" aria-label="DigiStore admin home">
+                <span class="brand-mark"><i class="ti ti-layout-dashboard" aria-hidden="true"></i></span>
+                <span class="brand-copy">
+                    <span class="brand-name" data-i18n="brandName">DigiStore</span>
+                    <span class="brand-subtitle" data-i18n="brandSubtitle">Admin surface</span>
+                </span>
+            </a>
+
+            <nav class="main-nav" aria-label="Primary navigation">
+                <a class="nav-link is-active" href="#discounts"><i class="ti ti-ticket" aria-hidden="true"></i><span data-i18n="navDiscounts">Discounts</span></a>
+                <a class="nav-link" href="#products"><i class="ti ti-package" aria-hidden="true"></i><span data-i18n="navProducts">Products</span></a>
+                <a class="nav-link" href="#cart"><i class="ti ti-shopping-cart" aria-hidden="true"></i><span data-i18n="navCart">Cart</span></a>
+                <a class="nav-link" href="#messages"><i class="ti ti-message-2" aria-hidden="true"></i><span data-i18n="navMessages">Messages</span></a>
+                <a class="nav-link" href="#location"><i class="ti ti-map-pin" aria-hidden="true"></i><span data-i18n="navLocation">Location</span></a>
+            </nav>
+
+            <div class="topbar-actions">
+                <% if (isAuthenticated) { %>
+                <button class="logout-button" id="logout-button" type="button" data-i18n-title="logout" aria-label="Logout" title="Logout"><i class="ti ti-logout" aria-hidden="true"></i><span data-i18n="logout">Logout</span></button>
+                <% } %>
+                <div class="language-switch" role="group" aria-label="Language selector">
+                    <button class="language-button is-active" type="button" data-lang-switch="en" aria-pressed="true">EN</button>
+                    <button class="language-button" type="button" data-lang-switch="fa" aria-pressed="false">FA</button>
+                </div>
+                <span class="status-pill"><span data-i18n="apiOnline">API online</span></span>
+                <button class="icon-button" id="refresh-button" type="button" data-i18n-title="refresh" aria-label="Refresh data" title="Refresh data"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+            </div>
+        </header>
+
+        <% if (!isAuthenticated) { %>
+        <section class="auth-section">
+            <form class="auth-card" id="login-form" method="POST" action="/api/admin/login" novalidate>
+                <h2 data-i18n="loginTitle">Admin login</h2>
+                <p data-i18n="loginSubtitle">Sign in to access the control surface.</p>
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="login-email"><span data-i18n="emailLabel">Email</span></label>
+                        <input id="login-email" name="email" type="email" autocomplete="email" required data-i18n-placeholder="emailPlaceholder" placeholder="admin@digistore.com">
+                    </div>
+                    <div class="field">
+                        <label for="login-password"><span data-i18n="passwordLabel">Password</span></label>
+                        <input id="login-password" name="password" type="password" autocomplete="current-password" required data-i18n-placeholder="passwordPlaceholder" placeholder="Enter your password">
+                    </div>
+                    <div class="form-actions">
+                        <button class="button button-primary button-full" type="submit"><i class="ti ti-login" aria-hidden="true"></i><span data-i18n="signIn">Sign in</span></button>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <% } %>
+
+        <% if (isAuthenticated) { %>
+        <main class="page" id="overview">
+            <section class="page-intro" aria-labelledby="page-title">
+                <div>
+                    <p class="eyebrow" data-i18n="pageEyebrow">Promotion operations</p>
+                    <h1 id="page-title" data-i18n="pageTitle">Keep promotions in motion.</h1>
+                    <p class="page-subtitle" data-i18n="pageSubtitle">Manage discount codes, message actions, and read-only location bindings in one operational surface.</p>
+                </div>
+                <div class="intro-actions">
+                    <button class="button button-primary" type="button" data-scroll-target="#discount-form"><i class="ti ti-plus" aria-hidden="true"></i><span data-i18n="createCode">Create code</span></button>
+                    <span class="sync-note" id="sync-note" data-i18n="syncWaiting">Waiting for API sync</span>
+                </div>
+            </section>
+
+            <section class="metric-grid" aria-label="Operational summary">
+                <article class="metric">
+                    <div><p class="metric-label" data-i18n="metricDiscounts">Discount codes</p><p class="metric-value" id="discount-count">—</p></div>
+                    <span class="metric-detail" id="discount-detail" data-i18n="loading">Loading</span>
+                </article>
+                <article class="metric">
+                    <div><p class="metric-label" data-i18n="metricMessages">Message actions</p><p class="metric-value">03</p></div>
+                    <span class="metric-detail" data-i18n="messageActionDetail">create · update · delete</span>
+                </article>
+                <article class="metric warning">
+                    <div><p class="metric-label" data-i18n="metricLocation">Location probes</p><p class="metric-value" data-i18n="readOnly">Read-only</p></div>
+                    <span class="metric-detail" data-i18n="twoEndpoints">2 endpoints</span>
+                </article>
+            </section>
+
+            <section class="content-section" id="discounts" aria-labelledby="discounts-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow" data-i18n="discountsEyebrow">Discount ledger</p>
+                        <h2 id="discounts-title" data-i18n="discountsTitle">Active codes</h2>
+                        <p class="section-description" data-i18n="discountsDescription">Fetch, filter, and create discount codes without leaving the control surface.</p>
+                    </div>
+                    <span class="endpoint endpoint-badge">GET /api/v1/discount/all/get</span>
+                </div>
+
+                <div class="section-layout">
+                    <form class="panel" id="discount-form" novalidate>
+                        <div class="panel-header">
+                            <div><h3 class="panel-title" data-i18n="createDiscountTitle">Create discount code</h3><p class="panel-copy endpoint">POST /api/v1/discount/create</p></div>
+                            <i class="ti ti-ticket" aria-hidden="true" style="color: var(--primary); font-size: 20px;"></i>
+                        </div>
+                        <div class="panel-body form-grid">
+                            <div class="field">
+                                <label for="discount-code"><span data-i18n="codeLabel">Code</span> <span class="required" aria-hidden="true">*</span></label>
+                                <input id="discount-code" name="code" type="text" autocomplete="off" required data-i18n-placeholder="codePlaceholder" placeholder="e.g. SUMMER15">
+                                <p class="field-help" data-i18n="codeHelp">Must be unique.</p>
+                            </div>
+                            <div class="field">
+                                <label for="discount-percent"><span data-i18n="percentLabel">Percent</span> <span class="required" aria-hidden="true">*</span></label>
+                                <input id="discount-percent" name="percent" type="number" min="1" max="100" step="1" required placeholder="20">
+                                <p class="field-help" data-i18n="percentHelp">Accepts a whole number from 1–100.</p>
+                            </div>
+                            <div class="field">
+                                <label for="discount-uses" data-i18n="usesLabel">Uses per user</label>
+                                <input id="discount-uses" name="user_per_use" type="number" min="1" step="1" value="1">
+                                <p class="field-help" data-i18n="usesHelp">Defaults to 1 when omitted.</p>
+                            </div>
+                            <div class="form-actions">
+                                <button class="button button-primary button-full" type="submit"><i class="ti ti-plus" aria-hidden="true"></i><span data-i18n="addDiscount">Add discount code</span></button>
+                                <p class="form-note" data-i18n="discountCreateNote">Required fields are sent as JSON.</p>
+                            </div>
+                        </div>
+                    </form>
+
+                    <section class="panel" aria-labelledby="discount-table-title">
+                        <div class="table-toolbar">
+                            <div><h3 class="panel-title" id="discount-table-title" data-i18n="discountTableTitle">Discount codes</h3><p class="panel-copy" data-i18n="discountTableDescription">Live records from the discount API.</p></div>
+                            <div class="table-toolbar-actions">
+                                <label class="search-wrap" for="discount-search">
+                                    <i class="ti ti-search" aria-hidden="true"></i>
+                                    <input class="search-input" id="discount-search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search codes">
+                                </label>
+                                <label class="checkbox-control"><input id="active-only" type="checkbox"><span data-i18n="activeOnly">Active only</span></label>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table>
+                                <thead><tr><th scope="col" data-i18n="tableCode">Code</th><th scope="col" data-i18n="tablePercent">Percent</th><th scope="col" data-i18n="tableUses">Uses per user</th><th scope="col" data-i18n="tableStatus">Status</th><th scope="col" data-i18n="tableCreated">Created</th><th scope="col" data-i18n="tableActions">Actions</th></tr></thead>
+                                <tbody id="discount-table-body"><tr><td class="loading-state" colspan="6"><i class="ti ti-loader-2" aria-hidden="true"></i><span data-i18n="loading">Loading</span></td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="table-footer"><span id="table-note" data-i18n="tableLiveNote">Live data loads from the API.</span><span id="table-count">—</span></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="content-section" id="messages" aria-labelledby="messages-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow" data-i18n="messagesEyebrow">Blind operations</p>
+                        <h2 id="messages-title" data-i18n="messagesTitle">Message actions</h2>
+                        <p class="section-description" data-i18n="messagesDescription">Create, update, or delete in-app messages without pretending they are listable.</p>
+                    </div>
+                    <span class="endpoint endpoint-badge">POST · PUT /:id · DELETE /:id</span>
+                </div>
+                <div class="messages-alert" role="note">
+                    <span class="alert-icon"><i class="ti ti-alert-triangle" aria-hidden="true"></i></span>
+                    <div><p class="alert-title" data-i18n="messageLimitTitle">No list endpoint — exact IDs only.</p><p class="alert-copy" data-i18n="messageLimitCopy">The current API exposes create, update, and delete, but no GET messages route. Keep target IDs in your operational workflow.</p></div>
+                </div>
+                <div class="operation-grid">
+                    <form class="operation-card" id="message-create-form" novalidate>
+                        <div class="operation-card-header"><div><p class="operation-verb" data-i18n="createVerb">Create</p><h3 class="operation-title" data-i18n="broadcastTitle">Broadcast message</h3></div><i class="ti ti-message-plus" aria-hidden="true" style="color: var(--primary); font-size: 20px;"></i></div>
+                        <div class="form-grid">
+                            <div class="field"><label for="message-title"><span data-i18n="titleLabel">Title</span> <span class="required" aria-hidden="true">*</span></label><input id="message-title" name="title" type="text" required data-i18n-placeholder="titlePlaceholder" placeholder="Weekend offer"></div>
+                            <div class="field"><label for="message-description"><span data-i18n="descriptionLabel">Description</span> <span class="required" aria-hidden="true">*</span></label><textarea id="message-description" name="desc" required data-i18n-placeholder="descriptionPlaceholder" placeholder="A limited offer is now live for eligible customers."></textarea></div>
+                        </div>
+                        <div class="form-actions"><button class="button button-primary button-full" type="submit"><i class="ti ti-send" aria-hidden="true"></i><span data-i18n="sendCreate">Send create request</span></button><p class="form-note endpoint">POST /api/v1/messages/create</p></div>
+                    </form>
+
+                    <form class="operation-card" id="message-update-form" novalidate>
+                        <div class="operation-card-header"><div><p class="operation-verb" data-i18n="updateVerb">Update</p><h3 class="operation-title" data-i18n="editTitle">Edit by exact ID</h3></div><i class="ti ti-edit" aria-hidden="true" style="color: var(--muted); font-size: 20px;"></i></div>
+                        <div class="form-grid">
+                            <div class="field"><label for="update-message-id"><span data-i18n="messageIdLabel">Message ID</span> <span class="required" aria-hidden="true">*</span></label><input id="update-message-id" name="id" type="number" min="1" required placeholder="42"></div>
+                            <div class="field"><label for="update-message-title" data-i18n="optionalTitleLabel">Optional title</label><input id="update-message-title" name="title" type="text" data-i18n-placeholder="leaveUnchanged" placeholder="Leave unchanged"></div>
+                            <div class="field"><label for="update-message-description" data-i18n="optionalDescriptionLabel">Optional description</label><textarea id="update-message-description" name="desc" data-i18n-placeholder="leaveUnchanged" placeholder="Leave unchanged"></textarea></div>
+                        </div>
+                        <div class="form-actions"><button class="button button-secondary button-full" type="submit"><i class="ti ti-edit" aria-hidden="true"></i><span data-i18n="sendUpdate">Send update request</span></button><p class="form-note endpoint">PUT /api/v1/messages/update/:id</p></div>
+                    </form>
+
+                    <form class="operation-card danger" id="message-delete-form" novalidate>
+                        <div class="operation-card-header"><div><p class="operation-verb" data-i18n="deleteVerb">Delete</p><h3 class="operation-title" data-i18n="revokeTitle">Revoke by exact ID</h3></div><i class="ti ti-trash" aria-hidden="true" style="color: var(--danger); font-size: 20px;"></i></div>
+                        <div class="form-grid">
+                            <div class="field"><label for="delete-message-id"><span data-i18n="messageIdLabel">Message ID</span> <span class="required" aria-hidden="true">*</span></label><input id="delete-message-id" name="id" type="number" min="1" required placeholder="42"></div>
+                            <p class="field-help" data-i18n="deleteWarning">Deletion is permanent. Confirm the ID from your upstream message system before sending.</p>
+                        </div>
+                        <div class="form-actions"><button class="button button-danger button-full" type="submit"><i class="ti ti-trash" aria-hidden="true"></i><span data-i18n="deleteMessage">Delete message</span></button><p class="form-note endpoint">DELETE /api/v1/messages/delete/:id</p></div>
+                    </form>
+                </div>
+
+                <section class="panel" aria-labelledby="messages-table-title" style="margin-top: 14px;">
+                    <div class="table-toolbar">
+                        <div><h3 class="panel-title" id="messages-table-title" data-i18n="messagesTableTitle">Existing messages</h3><p class="panel-copy" data-i18n="messagesTableDescription">Live records from the messages API.</p></div>
+                        <div class="table-toolbar-actions">
+                            <button class="button button-secondary" id="refresh-messages-button" type="button"><i class="ti ti-refresh" aria-hidden="true"></i><span data-i18n="refreshMessages">Refresh</span></button>
+                        </div>
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th scope="col" data-i18n="messageIdLabel">ID</th><th scope="col" data-i18n="titleLabel">Title</th><th scope="col" data-i18n="descriptionLabel">Description</th><th scope="col" data-i18n="tableCreated">Created</th></tr></thead>
+                            <tbody id="messages-table-body"><tr><td class="loading-state" colspan="4"><i class="ti ti-loader-2" aria-hidden="true"></i><span data-i18n="loading">Loading</span></td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer"><span id="messages-table-note" data-i18n="messagesLiveNote">Live data loads from the API.</span><span id="messages-table-count">—</span></div>
+                </section>
+            </section>
+
+            <section class="content-section" id="products" aria-labelledby="products-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow" data-i18n="productsEyebrow">Product catalog</p>
+                        <h2 id="products-title" data-i18n="productsTitle">Products</h2>
+                        <p class="section-description" data-i18n="productsDescription">Manage your product catalog without leaving the control surface.</p>
+                    </div>
+                    <span class="endpoint endpoint-badge">GET /api/v1/products/all/get</span>
+                </div>
+
+                <div class="section-layout">
+                    <form class="panel" id="product-form" novalidate>
+                        <div class="panel-header">
+                            <div><h3 class="panel-title" data-i18n="createProductTitle">Create product</h3><p class="panel-copy endpoint">POST /api/v1/products/create</p></div>
+                            <i class="ti ti-package" aria-hidden="true" style="color: var(--primary); font-size: 20px;"></i>
+                        </div>
+                        <div class="panel-body form-grid">
+                            <div class="field">
+                                <label for="product-name"><span data-i18n="productNameLabel">Name</span> <span class="required" aria-hidden="true">*</span></label>
+                                <input id="product-name" name="name" type="text" required data-i18n-placeholder="productNamePlaceholder" placeholder="Product name">
+                            </div>
+                            <div class="field">
+                                <label for="product-price"><span data-i18n="productPriceLabel">Price</span> <span class="required" aria-hidden="true">*</span></label>
+                                <input id="product-price" name="price" type="number" min="0" step="1" required placeholder="0">
+                            </div>
+                            <div class="field">
+                                <label for="product-description"><span data-i18n="productDescriptionLabel">Description</span></label>
+                                <textarea id="product-description" name="description" data-i18n-placeholder="productDescriptionPlaceholder" placeholder="Product description"></textarea>
+                            </div>
+                            <div class="field">
+                                <label for="product-image"><span data-i18n="productImageLabel">Image URL</span></label>
+                                <input id="product-image" name="image_url" type="text" placeholder="https://example.com/image.jpg">
+                            </div>
+                            <div class="field">
+                                <label for="product-stock"><span data-i18n="productStockLabel">Stock</span></label>
+                                <input id="product-stock" name="stock" type="number" min="0" step="1" value="0">
+                            </div>
+                            <div class="field">
+                                <label for="product-category"><span data-i18n="productCategoryLabel">Category</span></label>
+                                <input id="product-category" name="category" type="text" placeholder="Electronics">
+                            </div>
+                            <div class="form-actions">
+                                <button class="button button-primary button-full" type="submit"><i class="ti ti-plus" aria-hidden="true"></i><span data-i18n="addProduct">Add product</span></button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <section class="panel" aria-labelledby="products-table-title">
+                        <div class="table-toolbar">
+                            <div><h3 class="panel-title" id="products-table-title" data-i18n="productsTableTitle">Products</h3><p class="panel-copy" data-i18n="productsTableDescription">Live records from the products API.</p></div>
+                            <div class="table-toolbar-actions">
+                                <button class="button button-secondary" id="refresh-products-button" type="button"><i class="ti ti-refresh" aria-hidden="true"></i><span data-i18n="refreshProducts">Refresh</span></button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table>
+                                <thead><tr><th scope="col" data-i18n="tableName">Name</th><th scope="col" data-i18n="tablePrice">Price</th><th scope="col" data-i18n="tableStock">Stock</th><th scope="col" data-i18n="tableCategory">Category</th><th scope="col" data-i18n="tableStatus">Status</th><th scope="col" data-i18n="tableCreated">Created</th><th scope="col" data-i18n="tableActions">Actions</th></tr></thead>
+                                <tbody id="products-table-body"><tr><td class="loading-state" colspan="7"><i class="ti ti-loader-2" aria-hidden="true"></i><span data-i18n="loading">Loading</span></td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="table-footer"><span id="products-table-note" data-i18n="tableLiveNote">Live data loads from the API.</span><span id="products-table-count">—</span></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="content-section" id="cart" aria-labelledby="cart-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow" data-i18n="cartEyebrow">Shopping cart</p>
+                        <h2 id="cart-title" data-i18n="cartTitle">Cart items</h2>
+                        <p class="section-description" data-i18n="cartDescription">View and manage cart items for a session.</p>
+                    </div>
+                    <span class="endpoint endpoint-badge">GET /api/v1/cart/all/get</span>
+                </div>
+
+                <div class="section-layout">
+                    <form class="panel" id="cart-form" novalidate>
+                        <div class="panel-header">
+                            <div><h3 class="panel-title" data-i18n="addToCartTitle">Add to cart</h3><p class="panel-copy endpoint">POST /api/v1/cart/add</p></div>
+                            <i class="ti ti-shopping-cart" aria-hidden="true" style="color: var(--primary); font-size: 20px;"></i>
+                        </div>
+                        <div class="panel-body form-grid">
+                            <div class="field">
+                                <label for="cart-session"><span data-i18n="cartSessionLabel">Session ID</span> <span class="required" aria-hidden="true">*</span></label>
+                                <input id="cart-session" name="session_id" type="text" required data-i18n-placeholder="cartSessionPlaceholder" placeholder="session-123">
+                                <p class="field-help" data-i18n="cartSessionHelp">Any unique identifier for the cart session.</p>
+                            </div>
+                            <div class="field">
+                                <label for="cart-product-id"><span data-i18n="cartProductIdLabel">Product ID</span> <span class="required" aria-hidden="true">*</span></label>
+                                <input id="cart-product-id" name="product_id" type="number" min="1" required placeholder="1">
+                            </div>
+                            <div class="field">
+                                <label for="cart-quantity"><span data-i18n="cartQuantityLabel">Quantity</span></label>
+                                <input id="cart-quantity" name="quantity" type="number" min="1" step="1" value="1">
+                            </div>
+                            <div class="form-actions">
+                                <button class="button button-primary button-full" type="submit"><i class="ti ti-plus" aria-hidden="true"></i><span data-i18n="addToCart">Add to cart</span></button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <section class="panel" aria-labelledby="cart-table-title">
+                        <div class="table-toolbar">
+                            <div><h3 class="panel-title" id="cart-table-title" data-i18n="cartTableTitle">Cart items</h3><p class="panel-copy" data-i18n="cartTableDescription">Live records from the cart API.</p></div>
+                            <div class="table-toolbar-actions">
+                                <input class="search-input" id="cart-search" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search by session ID">
+                                <button class="button button-secondary" id="refresh-cart-button" type="button"><i class="ti ti-refresh" aria-hidden="true"></i><span data-i18n="refreshCart">Refresh</span></button>
+                                <button class="button button-danger" id="clear-cart-button" type="button"><i class="ti ti-trash" aria-hidden="true"></i><span data-i18n="clearCart">Clear cart</span></button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table>
+                                <thead><tr><th scope="col" data-i18n="tableId">ID</th><th scope="col" data-i18n="tableSession">Session</th><th scope="col" data-i18n="tableProduct">Product</th><th scope="col" data-i18n="tableQuantity">Quantity</th><th scope="col" data-i18n="tablePrice">Price</th><th scope="col" data-i18n="tableSubtotal">Subtotal</th><th scope="col" data-i18n="tableActions">Actions</th></tr></thead>
+                                <tbody id="cart-table-body"><tr><td class="loading-state" colspan="7"><i class="ti ti-loader-2" aria-hidden="true"></i><span data-i18n="loading">Loading</span></td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="table-footer"><span id="cart-table-note" data-i18n="cartLiveNote">Live data loads from the API.</span><span id="cart-table-count">—</span></div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="content-section" id="location" aria-labelledby="location-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow" data-i18n="locationEyebrow">Read-only probes</p>
+                        <h2 id="location-title" data-i18n="locationTitle">Geolocation bindings</h2>
+                        <p class="section-description" data-i18n="locationDescription">Test the location lookup and city-based discount logic without changing stored data.</p>
+                    </div>
+                    <span class="status-pill"><span data-i18n="externalService">External service connected</span></span>
+                </div>
+                <div class="location-grid">
+                    <article class="probe-card">
+                        <div class="probe-header"><div class="probe-title-row"><span class="probe-icon"><i class="ti ti-map-pin" aria-hidden="true"></i></span><div><h3 class="probe-title" data-i18n="locationProbeTitle">Location probe</h3><p class="probe-subtitle endpoint">GET /api/v1/location/get</p></div></div><span class="status-badge" id="location-status" data-i18n="waiting">Waiting</span></div>
+                        <div class="response-grid">
+                            <div class="response-item"><span class="response-label" data-i18n="ipLabel">IP</span><span class="response-value endpoint-value" id="location-ip">—</span></div>
+                            <div class="response-item"><span class="response-label" data-i18n="countryLabel">Country</span><span class="response-value" id="location-country">—</span></div>
+                            <div class="response-item"><span class="response-label" data-i18n="regionLabel">Region</span><span class="response-value" id="location-region">—</span></div>
+                            <div class="response-item"><span class="response-label" data-i18n="cityLabel">City</span><span class="response-value" id="location-city">—</span></div>
+                            <div class="response-item"><span class="response-label" data-i18n="coordinatesLabel">Coordinates</span><span class="response-value endpoint-value" id="location-coordinates">—</span></div>
+                        </div>
+                        <div class="probe-footer"><button class="button button-secondary" id="location-button" type="button"><i class="ti ti-player-play" aria-hidden="true"></i><span data-i18n="runLocation">Test location API</span></button></div>
+                    </article>
+                    <article class="probe-card">
+                        <div class="probe-header"><div class="probe-title-row"><span class="probe-icon"><i class="ti ti-discount-2" aria-hidden="true"></i></span><div><h3 class="probe-title" data-i18n="eligibilityProbeTitle">Eligibility probe</h3><p class="probe-subtitle endpoint">GET /api/v1/discount/location/get</p></div></div><span class="status-badge" id="eligibility-status" data-i18n="waiting">Waiting</span></div>
+                        <div class="response-grid">
+                            <div class="response-item"><span class="response-label" data-i18n="cityLabel">City</span><span class="response-value" id="eligibility-city">—</span></div>
+                            <div class="response-item"><span class="response-label" data-i18n="countryLabel">Country</span><span class="response-value" id="eligibility-country">—</span></div>
+                            <div class="response-item"><span class="response-label" data-i18n="discountLabel">Discount</span><span class="response-value" id="eligibility-discount">—</span></div>
+                        </div>
+                        <p class="probe-message" id="eligibility-message" dir="auto" data-i18n="probeWaiting">Run the eligibility check to see the API response.</p>
+                        <div class="probe-footer"><button class="button button-primary" id="eligibility-button" type="button"><i class="ti ti-player-play" aria-hidden="true"></i><span data-i18n="checkEligibility">Check discount eligibility</span></button></div>
+                    </article>
+                </div>
+            </section>
+
+            <div class="feedback" id="feedback" role="status" aria-live="polite"><p class="feedback-title" id="feedback-title"></p><p class="feedback-copy" id="feedback-copy"></p></div>
+            <footer><span data-i18n="footerNote">DigiStore admin · operational surface</span><span class="endpoint">Express API · EJS view · bilingual UI</span></footer>
+        </main>
+        <% } %>
+    </div>
+
+    <script>
+        (() => {
+            try {
+            const translations = {
+                en: {
+                    brandName: "DigiStore", brandSubtitle: "Admin surface", navDiscounts: "Discounts",                      navMessages: "Messages", navLocation: "Location", loginTitle: "Admin login", loginSubtitle: "Sign in to access the control surface.", emailLabel: "Email", emailPlaceholder: "admin@digistore.com", passwordLabel: "Password", passwordPlaceholder: "Enter your password", signIn: "Sign in", loginSuccess: "Login successful", loginError: "Invalid email or password", logoutSuccess: "Logged out successfully", apiOnline: "API online", refresh: "Refresh data", pageEyebrow: "Promotion operations", pageTitle: "Keep promotions in motion.", pageSubtitle: "Manage discount codes, message actions, and read-only location bindings in one operational surface.", createCode: "Create code", syncWaiting: "Waiting for API sync", syncUpdated: "Synced just now", metricDiscounts: "Discount codes", metricMessages: "Message actions", metricLocation: "Location probes", loading: "Loading", messageActionDetail: "create · update · delete", readOnly: "Read-only", twoEndpoints: "2 endpoints", discountsEyebrow: "Discount ledger", discountsTitle: "Active codes", discountsDescription: "Fetch, filter, and create discount codes without leaving the control surface.", createDiscountTitle: "Create discount code", codeLabel: "Code", codePlaceholder: "e.g. SUMMER15", codeHelp: "Must be unique.", percentLabel: "Percent", percentHelp: "Accepts a whole number from 1–100.", usesLabel: "Uses per user", usesHelp: "Defaults to 1 when omitted.", addDiscount: "Add discount code", discountCreateNote: "Required fields are sent as JSON.", discountTableTitle: "Discount codes", discountTableDescription: "Live records from the discount API.", searchPlaceholder: "Search codes", activeOnly: "Active only", tableCode: "Code", tablePercent: "Percent", tableUses: "Uses per user", tableStatus: "Status", tableCreated: "Created", tableActions: "Actions", active: "Active", paused: "Paused", tableLiveNote: "Live data loads from the API.", noDiscounts: "No discount codes match this filter.", tableReadOnly: "Read-only", tableRows: "{count} records", tableLoadError: "Could not load discount codes.", deleteDiscount: "Delete", deleteConfirm: "Are you sure you want to delete this discount code?", deleteSuccess: "Discount code deleted", deleteError: "Could not delete discount code.", refreshMessages: "Refresh", messagesTableTitle: "Existing messages", messagesTableDescription: "Live records from the messages API.", messagesLiveNote: "Live data loads from the API.", refreshSuccess: "Refreshed", messageIdLabel: "Message ID", descriptionLabel: "Description", noMessages: "No messages found.", messagesTableCount: "{count} records", tableRows: "{count} records", messagesEyebrow: "Blind operations", messagesTitle: "Message actions", messagesDescription: "Create, update, or delete in-app messages without pretending they are listable.", messageLimitTitle: "No list endpoint — exact IDs only.", messageLimitCopy: "The current API exposes create, update, and delete, but no GET messages route. Keep target IDs in your operational workflow.", createVerb: "Create", updateVerb: "Update", deleteVerb: "Delete", broadcastTitle: "Broadcast message", editTitle: "Edit by exact ID", revokeTitle: "Revoke by exact ID", sendCreate: "Send create request", sendUpdate: "Send update request", deleteMessage: "Delete message", optionalTitleLabel: "Optional title", optionalDescriptionLabel: "Optional description", leaveUnchanged: "Leave unchanged", deleteWarning: "Deletion is permanent. Confirm the ID from your upstream message system before sending.", productsEyebrow: "Product catalog", productsTitle: "Products", productsDescription: "Manage your product catalog without leaving the control surface.", createProductTitle: "Create product", productNameLabel: "Name", productNamePlaceholder: "Product name", productPriceLabel: "Price", productDescriptionLabel: "Description", productDescriptionPlaceholder: "Product description", productImageLabel: "Image URL", productStockLabel: "Stock", productCategoryLabel: "Category", addProduct: "Add product", productsTableTitle: "Products", productsTableDescription: "Live records from the products API.", refreshProducts: "Refresh", tableName: "Name", tableStock: "Stock", tableCategory: "Category", noProducts: "No products found.", productsTableCount: "{count} records", productCreateSuccess: "Product created", productUpdateSuccess: "Product updated", productDeleteSuccess: "Product deleted", productDeleteConfirm: "Are you sure you want to delete this product?", cartEyebrow: "Shopping cart", cartTitle: "Cart items", cartDescription: "View and manage cart items for a session.", addToCartTitle: "Add to cart", cartSessionLabel: "Session ID", cartSessionPlaceholder: "session-123", cartSessionHelp: "Any unique identifier for the cart session.", cartProductIdLabel: "Product ID", cartQuantityLabel: "Quantity", addToCart: "Add to cart", cartTableTitle: "Cart items", cartTableDescription: "Live records from the cart API.", refreshCart: "Refresh", clearCart: "Clear cart", tableId: "ID", tableSession: "Session", tableProduct: "Product", tableSubtotal: "Subtotal", noCartItems: "No cart items found.", cartTableCount: "{count} records", cartAddSuccess: "Added to cart", cartUpdateSuccess: "Cart updated", cartDeleteSuccess: "Cart item removed", cartClearSuccess: "Cart cleared", cartClearConfirm: "Are you sure you want to clear the cart?", updateProduct: "Edit", requestError: "Request error", createVerb: "Create", broadcastTitle: "Broadcast message", titleLabel: "Title", titlePlaceholder: "Weekend offer", descriptionLabel: "Description", descriptionPlaceholder: "A limited offer is now live for eligible customers.", sendCreate: "Send create request", updateVerb: "Update", editTitle: "Edit by exact ID", messageIdLabel: "Message ID", optionalTitleLabel: "Optional title", optionalDescriptionLabel: "Optional description", leaveUnchanged: "Leave unchanged", sendUpdate: "Send update request", deleteVerb: "Delete", revokeTitle: "Revoke by exact ID", deleteWarning: "Deletion is permanent. Confirm the ID from your upstream message system before sending.", deleteMessage: "Delete message", locationEyebrow: "Read-only probes", locationTitle: "Geolocation bindings", locationDescription: "Test the location lookup and city-based discount logic without changing stored data.", externalService: "External service connected", locationProbeTitle: "Location probe", eligibilityProbeTitle: "Eligibility probe", waiting: "Waiting", ipLabel: "IP", countryLabel: "Country", regionLabel: "Region", cityLabel: "City", coordinatesLabel: "Coordinates", discountLabel: "Discount", runLocation: "Test location API", checkEligibility: "Check discount eligibility", probeWaiting: "Run the eligibility check to see the API response.", locationReady: "Ready", eligibilityReady: "Eligible", probeError: "Probe failed", footerNote: "DigiStore admin · operational surface", refreshSuccess: "Panel refreshed", refreshError: "Refresh failed", createSuccess: "Discount created", messageCreated: "Message created", messageUpdated: "Message updated", messageDeleted: "Message deleted", requestError: "Request failed", locationSuccess: "Location loaded", eligibilitySuccess: "Eligibility loaded", languageEnglish: "English", languagePersian: "Persian",
+                    tableName: "Name", tablePrice: "Price", tableStock: "Stock", tableCategory: "Category", cartLiveNote: "Live data loads from the API.", logout: "Logout", navCart: "Cart", navProducts: "Products", cartDeleteConfirm: "Are you sure you want to delete this cart item?", deleteProduct: "Delete product", tableQuantity: "Quantity",                },
+                fa: {
+                    brandName: "دیجی‌استور", brandSubtitle: "پنل مدیریت", navDiscounts: "تخفیف‌ها",                      navMessages: "پیام‌ها", navLocation: "موقعیت", loginTitle: "ورود مدیر", loginSubtitle: "برای دسترسی به پنل وارد شوید.", emailLabel: "ایمیل", emailPlaceholder: "admin@digistore.com", passwordLabel: "رمز عبور", passwordPlaceholder: "رمز عبور خود را وارد کنید", signIn: "ورود", loginSuccess: "ورود با موفقیت انجام شد", loginError: "ایمیل یا رمز عبور نامعتبر است", logoutSuccess: "با موفقیت خارج شدید", apiOnline: "API آنلاین است", refresh: "به‌روزرسانی داده‌ها", pageEyebrow: "عملیات پروموشن", pageTitle: "تخفیف‌ها را همیشه فعال نگه دارید.", pageSubtitle: "کدهای تخفیف، عملیات پیام‌ها و اتصال‌های موقعیت مکانی را در یک پنل عملیاتی مدیریت کنید.", createCode: "ایجاد کد", syncWaiting: "در انتظار همگام‌سازی با API", syncUpdated: "همین حالا همگام شد", metricDiscounts: "کدهای تخفیف", metricMessages: "عملیات پیام", metricLocation: "بررسی‌های موقعیت", loading: "در حال بارگذاری", messageActionDetail: "ایجاد · ویرایش · حذف", readOnly: "فقط خواندنی", twoEndpoints: "۲ endpoint", discountsEyebrow: "دفتر تخفیف‌ها", discountsTitle: "کدهای فعال", discountsDescription: "کدهای تخفیف را دریافت، فیلتر و بدون خروج از پنل ایجاد کنید.", createDiscountTitle: "ایجاد کد تخفیف", codeLabel: "کد", codePlaceholder: "مثلاً SUMMER15", codeHelp: "کد باید یکتا باشد.", percentLabel: "درصد", percentHelp: "یک عدد صحیح بین ۱ تا ۱۰۰ وارد کنید.", usesLabel: "تعداد استفاده برای هر کاربر", usesHelp: "اگر خالی باشد مقدار پیش‌فرض ۱ است.", addDiscount: "افزودن کد تخفیف", discountCreateNote: "فیلدهای الزامی به‌صورت JSON ارسال می‌شوند.", discountTableTitle: "کدهای تخفیف", discountTableDescription: "رکوردهای زنده از API تخفیف.", searchPlaceholder: "جست‌وجوی کد", activeOnly: "فقط فعال‌ها", tableCode: "کد", tablePercent: "درصد", tableUses: "استفاده برای هر کاربر", tableStatus: "وضعیت", tableCreated: "تاریخ ایجاد", tableActions: "عملیات", active: "فعال", paused: "متوقف", tableLiveNote: "داده‌ها به‌صورت زنده از API دریافت می‌شوند.", noDiscounts: "کدی با این فیلتر پیدا نشد.", tableReadOnly: "فقط خواندنی", tableRows: "{count} رکورد", tableLoadError: "دریافت کدهای تخفیف ممکن نبود.", deleteDiscount: "حذف", deleteConfirm: "آیا از حذف این کد تخفیف اطمینان دارید؟", deleteSuccess: "کد تخفیف حذف شد", deleteError: "حذف کد تخفیف ممکن نبود.", refreshMessages: "به‌روزرسانی", messagesTableTitle: "پیام‌های موجود", messagesTableDescription: "رکوردهای زنده از API پیام‌ها.", messagesLiveNote: "داده‌ها به‌صورت زنده از API دریافت می‌شوند.", refreshSuccess: "به‌روز شد", messageIdLabel: "شناسه پیام", descriptionLabel: "توضیحات", noMessages: "پیامی پیدا نشد.", messagesTableCount: "{count} رکورد", tableRows: "{count} رکورد", messagesEyebrow: "عملیات بدون فهرست", messagesTitle: "عملیات پیام‌ها", messagesDescription: "پیام‌های درون‌برنامه‌ای را ایجاد، ویرایش یا حذف کنید؛ بدون نمایش فهرست ساختگی.", messageLimitTitle: "endpoint فهرست وجود ندارد — فقط شناسه دقیق.", messageLimitCopy: "API فعلی ایجاد، ویرایش و حذف را دارد اما endpoint دریافت فهرست پیام‌ها را ندارد. شناسه پیام را از جریان کاری خود داشته باشید.", createVerb: "ایجاد", broadcastTitle: "ارسال پیام", titleLabel: "عنوان", titlePlaceholder: "پیشنهاد آخر هفته", descriptionLabel: "توضیحات", descriptionPlaceholder: "یک پیشنهاد محدود برای مشتریان واجد شرایط فعال شده است.", sendCreate: "ارسال درخواست ایجاد", updateVerb: "ویرایش", editTitle: "ویرایش با شناسه دقیق", messageIdLabel: "شناسه پیام", optionalTitleLabel: "عنوان اختیاری", optionalDescriptionLabel: "توضیحات اختیاری", leaveUnchanged: "بدون تغییر بماند", sendUpdate: "ارسال درخواست ویرایش", deleteVerb: "حذف", revokeTitle: "لغو با شناسه دقیق", deleteWarning: "حذف دائمی است. پیش از ارسال، شناسه را از سامانه پیام upstream تأیید کنید.", deleteMessage: "حذف پیام", locationEyebrow: "بررسی‌های فقط خواندنی", locationTitle: "اتصال‌های موقعیت مکانی", locationDescription: "دریافت موقعیت و منطق تخفیف شهری را بدون تغییر داده‌های ذخیره‌شده آزمایش کنید.", externalService: "سرویس خارجی متصل است", locationProbeTitle: "بررسی موقعیت", eligibilityProbeTitle: "بررسی واجد شرایط بودن", waiting: "در انتظار", ipLabel: "IP", countryLabel: "کشور", regionLabel: "استان", cityLabel: "شهر", coordinatesLabel: "مختصات", discountLabel: "تخفیف", runLocation: "آزمایش API موقعیت", checkEligibility: "بررسی واجد شرایط بودن تخفیف", probeWaiting: "برای دیدن پاسخ API، بررسی واجد شرایط بودن را اجرا کنید.", locationReady: "آماده", eligibilityReady: "واجد شرایط", probeError: "بررسی ناموفق بود", footerNote: "پنل مدیریت دیجی‌استور · سطح عملیاتی", refreshSuccess: "پنل به‌روزرسانی شد", refreshError: "به‌روزرسانی ناموفق بود", createSuccess: "کد تخفیف ایجاد شد", messageCreated: "پیام ایجاد شد", messageUpdated: "پیام ویرایش شد", messageDeleted: "پیام حذف شد", requestError: "درخواست ناموفق بود", locationSuccess: "موقعیت دریافت شد", eligibilitySuccess: "واجد شرایط بودن دریافت شد", languageEnglish: "انگلیسی", languagePersian: "فارسی",
+                    tableName: "نام", tablePrice: "قیمت", tableStock: "موجودی", tableCategory: "دسته‌بندی", cartLiveNote: "داده‌ها به‌صورت زنده از API بارگذاری می‌شوند.", logout: "خروج", navCart: "سبد خرید", navProducts: "محصولات", cartDeleteConfirm: "آیا از حذف این آیتم سبد خرید اطمینان دارید؟", deleteProduct: "حذف محصول", tableQuantity: "تعداد",                }
+            };
+
+            const state = { language: "en", discounts: [], messages: [], products: [], cartItems: [], cartItemsFiltered: [], activeOnly: false, search: "" };
+            const translate = (key) => translations[state.language][key] || translations.en[key] || key;
+            const byId = (id) => document.getElementById(id);
+            const escapeHtml = (value) => String(value ?? "—").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+            const formatDate = (value) => {
+                if (!value) return "—";
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) return escapeHtml(value);
+                return new Intl.DateTimeFormat(state.language === "fa" ? "fa-IR" : "en-US", { year: "numeric", month: "short", day: "numeric" }).format(date);
+            };
+            const formatCount = (count) => translate("tableRows").replace("{count}", new Intl.NumberFormat(state.language === "fa" ? "fa-IR" : "en-US").format(count));
+
+            function applyTranslations() {
+                document.documentElement.lang = state.language === "fa" ? "fa" : "en";
+                document.documentElement.dir = state.language === "fa" ? "rtl" : "ltr";
+                document.title = `DigiStore · ${state.language === "fa" ? "مدیریت" : "Admin"}`;
+                document.querySelectorAll("[data-i18n]").forEach((element) => { element.textContent = translate(element.dataset.i18n); });
+                document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => { element.placeholder = translate(element.dataset.i18nPlaceholder); });
+                document.querySelectorAll("[data-i18n-title]").forEach((element) => { element.title = translate(element.dataset.i18nTitle); });
+                document.querySelectorAll("[data-lang-switch]").forEach((button) => {
+                    const active = button.dataset.langSwitch === state.language;
+                    button.classList.toggle("is-active", active);
+                    button.setAttribute("aria-pressed", String(active));
+                });
+                if (byId("discount-table-body")) renderDiscounts();
+                if (byId("discount-detail")) updateMetricLabels();
+            }
+
+            function updateMetricLabels() {
+                const detail = byId("discount-detail");
+                if (!detail) return;
+                if (state.discounts.length) detail.textContent = `${state.discounts.filter((item) => item.is_active !== false).length} ${state.language === "fa" ? "فعال" : "active"}`;
+                else detail.textContent = translate("loading");
+                const countElement = byId("discount-count");
+                if (countElement) countElement.textContent = state.discounts.length ? new Intl.NumberFormat(state.language === "fa" ? "fa-IR" : "en-US").format(state.discounts.length) : "—";
+            }
+
+            function showFeedback(title, copy, type = "success") {
+                const feedback = byId("feedback");
+                byId("feedback-title").textContent = title;
+                byId("feedback-copy").textContent = copy;
+                feedback.className = `feedback ${type} is-visible`;
+                window.clearTimeout(showFeedback.timeout);
+                showFeedback.timeout = window.setTimeout(() => feedback.classList.remove("is-visible"), 4200);
+            }
+
+            function renderDiscounts() {
+                const body = byId("discount-table-body");
+                if (!body) return;
+                const search = state.search.trim().toLowerCase();
+                const filtered = state.discounts.filter((discount) => {
+                    const matchesSearch = !search || String(discount.code || "").toLowerCase().includes(search);
+                    const matchesActive = !state.activeOnly || discount.is_active !== false;
+                    return matchesSearch && matchesActive;
+                });
+                updateMetricLabels();
+                const tableCount = byId("table-count");
+                if (tableCount) tableCount.textContent = formatCount(filtered.length);
+                if (!filtered.length) {
+                    body.innerHTML = `<tr><td class="empty-state" colspan="6"><i class="ti ti-database-off" aria-hidden="true"></i><span>${escapeHtml(translate("noDiscounts"))}</span></td></tr>`;
+                    return;
+                }
+                body.innerHTML = filtered.map((discount) => {
+                    const isActive = discount.is_active !== false;
+                    return `<tr>
+                        <td class="code-value">${escapeHtml(discount.code)}</td>
+                        <td>${escapeHtml(discount.percent)}%</td>
+                        <td>${escapeHtml(discount.user_per_use ?? 1)}</td>
+                        <td><span class="status-badge ${isActive ? "active" : "paused"}">${escapeHtml(translate(isActive ? "active" : "paused"))}</span></td>
+                        <td class="muted-cell">${formatDate(discount.createdAt || discount.created_at)}</td>
+                        <td><button class="icon-button danger" type="button" data-action="delete-discount" data-id="${discount.id}" aria-label="${escapeHtml(translate("deleteDiscount"))}"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+                    </tr>`;
+                }).join("");
+            }
+
+            function setTableLoading() {
+                const body = byId("discount-table-body");
+                if (!body) return;
+                body.innerHTML = `<tr><td class="loading-state" colspan="6"><i class="ti ti-loader-2" aria-hidden="true"></i><span>${escapeHtml(translate("loading"))}</span></td></tr>`;
+            }
+
+            async function readJson(response) {
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || payload.success === false) throw new Error(payload.message || translate("requestError"));
+                return payload;
+            }
+
+            async function loadDiscounts() {
+                setTableLoading();
+                try {
+                    const payload = await readJson(await fetch("/api/v1/discount/all/get", { headers: { Accept: "application/json" } }));
+                    state.discounts = Array.isArray(payload.data) ? payload.data : [];
+                    const syncNote = byId("sync-note");
+                    if (syncNote) syncNote.textContent = translate("syncUpdated");
+                    renderDiscounts();
+                } catch (error) {
+                    state.discounts = [];
+                    const body = byId("discount-table-body");
+                    if (body) body.innerHTML = `<tr><td class="empty-state" colspan="6"><i class="ti ti-alert-circle" aria-hidden="true"></i><span>${escapeHtml(error.message || translate("tableLoadError"))}</span></td></tr>`;
+                    const tableCount = byId("table-count");
+                    if (tableCount) tableCount.textContent = "—";
+                    updateMetricLabels();
+                    const syncNote = byId("sync-note");
+                    if (syncNote) syncNote.textContent = translate("refreshError");
+                }
+            }
+
+            async function loadMessages() {
+                const body = byId("messages-table-body");
+                if (!body) return;
+                body.innerHTML = `<tr><td class="loading-state" colspan="4"><i class="ti ti-loader-2" aria-hidden="true"></i><span>${escapeHtml(translate("loading"))}</span></td></tr>`;
+                try {
+                    const payload = await readJson(await fetch("/api/v1/messages/all/get", { headers: { Accept: "application/json" } }));
+                    state.messages = Array.isArray(payload.data) ? payload.data : [];
+                    renderMessages();
+                } catch (error) {
+                    state.messages = [];
+                    body.innerHTML = `<tr><td class="empty-state" colspan="4"><i class="ti ti-alert-circle" aria-hidden="true"></i><span>${escapeHtml(error.message || translate("tableLoadError"))}</span></td></tr>`;
+                    const messagesTableCount = byId("messages-table-count");
+                    if (messagesTableCount) messagesTableCount.textContent = "—";
+                }
+            }
+
+            function renderMessages() {
+                const body = byId("messages-table-body");
+                if (!body) return;
+                const messagesTableCount = byId("messages-table-count");
+                if (messagesTableCount) messagesTableCount.textContent = translate("messagesTableCount").replace("{count}", new Intl.NumberFormat(state.language === "fa" ? "fa-IR" : "en-US").format(state.messages.length));
+                if (!state.messages.length) {
+                    body.innerHTML = `<tr><td class="empty-state" colspan="4"><i class="ti ti-database-off" aria-hidden="true"></i><span>${escapeHtml(translate("noMessages"))}</span></td></tr>`;
+                    return;
+                }
+                body.innerHTML = state.messages.map((message) => {
+                    return `<tr>
+                        <td class="muted-cell">${escapeHtml(message.id)}</td>
+                        <td>${escapeHtml(message.title)}</td>
+                        <td>${escapeHtml(message.desc)}</td>
+                        <td class="muted-cell">${formatDate(message.createdAt || message.created_at)}</td>
+                    </tr>`;
+                }).join("");
+            }
+
+            async function submitJson(form, url, method, successKey) {
+                const submitButton = form.querySelector("button[type=submit]");
+                submitButton.disabled = true;
+                try {
+                    const data = Object.fromEntries(new FormData(form).entries());
+                    const payload = method === "DELETE" ? undefined : JSON.stringify(data);
+                    const response = await fetch(url, { method, headers: payload ? { "Content-Type": "application/json", Accept: "application/json" } : { Accept: "application/json" }, body: payload });
+                    await readJson(response);
+                    form.reset();
+                    showFeedback(translate(successKey), translate(successKey), "success");
+                    if (url.includes("discount")) await loadDiscounts();
+                    if (url.includes("message")) await loadMessages();
+                    if (url.includes("product")) await loadProducts();
+                    if (url.includes("cart")) await loadCart();
+                } catch (error) {
+                    showFeedback(translate("requestError"), error.message || translate("requestError"), "error");
+                } finally {
+                    submitButton.disabled = false;
+                }
+            }
+
+            async function runLocationProbe() {
+                const button = byId("location-button");
+                button.disabled = true;
+                try {
+                    const payload = await readJson(await fetch("/api/v1/location/get", { headers: { Accept: "application/json" } }));
+                    const data = payload.data || {};
+                    byId("location-ip").textContent = data.ip || "—";
+                    byId("location-country").textContent = data.country || "—";
+                    byId("location-region").textContent = data.region || "—";
+                    byId("location-city").textContent = data.city || "—";
+                    byId("location-coordinates").textContent = Array.isArray(data.coordinates) ? data.coordinates.map((value) => Number(value).toFixed(4)).join(", ") : "—";
+                    byId("location-status").textContent = translate("locationReady");
+                    byId("location-status").className = "status-badge active";
+                    showFeedback(translate("locationSuccess"), data.city || translate("locationSuccess"));
+                } catch (error) {
+                    byId("location-status").textContent = translate("probeError");
+                    byId("location-status").className = "status-badge unavailable";
+                    showFeedback(translate("probeError"), error.message || translate("requestError"), "error");
+                } finally { button.disabled = false; }
+            }
+
+            async function runEligibilityProbe() {
+                const button = byId("eligibility-button");
+                button.disabled = true;
+                try {
+                    const payload = await readJson(await fetch("/api/v1/discount/location/get", { headers: { Accept: "application/json" } }));
+                    byId("eligibility-city").textContent = payload.city || "—";
+                    byId("eligibility-country").textContent = payload.country || "—";
+                    byId("eligibility-discount").textContent = `${payload.discount ?? 0}%`;
+                    byId("eligibility-message").textContent = payload.message || "—";
+                    byId("eligibility-status").textContent = payload.discount > 0 ? translate("eligibilityReady") : translate("readOnly");
+                    byId("eligibility-status").className = `status-badge ${payload.discount > 0 ? "active" : "paused"}`;
+                    showFeedback(translate("eligibilitySuccess"), `${payload.city || "—"} · ${payload.discount ?? 0}%`);
+                } catch (error) {
+                    byId("eligibility-status").textContent = translate("probeError");
+                    byId("eligibility-status").className = "status-badge unavailable";
+                    showFeedback(translate("probeError"), error.message || translate("requestError"), "error");
+                } finally { button.disabled = false; }
+            }
+
+            async function deleteDiscountCode(id) {
+                if (!confirm(translate("deleteConfirm"))) return;
+                try {
+                    await readJson(await fetch(`/api/v1/discount/delete/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Accept: "application/json" } }));
+                    showFeedback(translate("deleteSuccess"), translate("deleteSuccess"), "success");
+                    await loadDiscounts();
+                } catch (error) {
+                    showFeedback(translate("deleteError"), error.message || translate("deleteError"), "error");
+                }
+            }
+
+            async function loadProducts() {
+                const body = byId("products-table-body");
+                if (!body) return;
+                body.innerHTML = `<tr><td class="loading-state" colspan="7"><i class="ti ti-loader-2" aria-hidden="true"></i><span>${escapeHtml(translate("loading"))}</span></td></tr>`;
+                try {
+                    const payload = await readJson(await fetch("/api/v1/products/all/get", { headers: { Accept: "application/json" } }));
+                    state.products = Array.isArray(payload.data) ? payload.data : [];
+                    renderProducts();
+                } catch (error) {
+                    state.products = [];
+                    body.innerHTML = `<tr><td class="empty-state" colspan="7"><i class="ti ti-alert-circle" aria-hidden="true"></i><span>${escapeHtml(error.message || translate("tableLoadError"))}</span></td></tr>`;
+                    byId("products-table-count").textContent = "—";
+                }
+            }
+
+            function renderProducts() {
+                const body = byId("products-table-body");
+                if (!body) return;
+                byId("products-table-count").textContent = translate("productsTableCount").replace("{count}", new Intl.NumberFormat(state.language === "fa" ? "fa-IR" : "en-US").format(state.products.length));
+                if (!state.products.length) {
+                    body.innerHTML = `<tr><td class="empty-state" colspan="7"><i class="ti ti-database-off" aria-hidden="true"></i><span>${escapeHtml(translate("noProducts"))}</span></td></tr>`;
+                    return;
+                }
+                body.innerHTML = state.products.map((product) => {
+                    const isActive = product.is_active !== false;
+                    return `<tr>
+                        <td>${escapeHtml(product.name)}</td>
+                        <td>${escapeHtml(product.price)}</td>
+                        <td>${escapeHtml(product.stock ?? 0)}</td>
+                        <td>${escapeHtml(product.category || "—")}</td>
+                        <td><span class="status-badge ${isActive ? "active" : "paused"}">${escapeHtml(translate(isActive ? "active" : "paused"))}</span></td>
+                        <td class="muted-cell">${formatDate(product.createdAt || product.created_at)}</td>
+                        <td>
+                            <button class="icon-button" type="button" data-action="update-product" data-id="${product.id}" aria-label="${escapeHtml(translate("updateProduct"))}"><i class="ti ti-edit" aria-hidden="true"></i></button>
+                            <button class="icon-button danger" type="button" data-action="delete-product" data-id="${product.id}" aria-label="${escapeHtml(translate("deleteProduct"))}"><i class="ti ti-trash" aria-hidden="true"></i></button>
+                        </td>
+                    </tr>`;
+                }).join("");
+            }
+
+            async function loadCart() {
+                const body = byId("cart-table-body");
+                if (!body) return;
+                body.innerHTML = `<tr><td class="loading-state" colspan="7"><i class="ti ti-loader-2" aria-hidden="true"></i><span>${escapeHtml(translate("loading"))}</span></td></tr>`;
+                try {
+                    const payload = await readJson(await fetch("/api/v1/cart/all/get", { headers: { Accept: "application/json" } }));
+                    state.cartItems = Array.isArray(payload.data) ? payload.data : [];
+                    renderCart();
+                } catch (error) {
+                    state.cartItems = [];
+                    body.innerHTML = `<tr><td class="empty-state" colspan="7"><i class="ti ti-alert-circle" aria-hidden="true"></i><span>${escapeHtml(error.message || translate("tableLoadError"))}</span></td></tr>`;
+                    byId("cart-table-count").textContent = "—";
+                }
+            }
+
+            function renderCart() {
+                const body = byId("cart-table-body");
+                if (!body) return;
+                byId("cart-table-count").textContent = translate("cartTableCount").replace("{count}", new Intl.NumberFormat(state.language === "fa" ? "fa-IR" : "en-US").format(state.cartItems.length));
+                if (!state.cartItems.length) {
+                    body.innerHTML = `<tr><td class="empty-state" colspan="7"><i class="ti ti-database-off" aria-hidden="true"></i><span>${escapeHtml(translate("noCartItems"))}</span></td></tr>`;
+                    return;
+                }
+                body.innerHTML = state.cartItems.map((item) => {
+                    const product = item.product || {};
+                    const subtotal = (product.price || 0) * (item.quantity || 0);
+                    return `<tr>
+                        <td class="muted-cell">${escapeHtml(item.id)}</td>
+                        <td>${escapeHtml(item.session_id)}</td>
+                        <td>${escapeHtml(product.name || "—")}</td>
+                        <td>${escapeHtml(item.quantity)}</td>
+                        <td>${escapeHtml(product.price || 0)}</td>
+                        <td>${escapeHtml(subtotal)}</td>
+                        <td><button class="icon-button danger" type="button" data-action="delete-cart-item" data-id="${item.id}" aria-label="${escapeHtml(translate("cartDeleteSuccess"))}"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+                    </tr>`;
+                }).join("");
+            }
+
+
+            async function submitLogin(event) {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const button = form.querySelector("button[type=submit]");
+                button.disabled = true;
+                try {
+                    const data = Object.fromEntries(new FormData(form).entries());
+                    const payload = await readJson(await fetch("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(data) }));
+                    showFeedback(translate("loginSuccess"), translate("loginSuccess"), "success");
+                    setTimeout(() => location.reload(), 600);
+                } catch (error) {
+                    showFeedback(translate("loginError"), error.message || translate("loginError"), "error");
+                } finally {
+                    button.disabled = false;
+                }
+            }
+
+            async function submitLogout() {
+                try {
+                    await readJson(await fetch("/api/admin/logout", { method: "POST", headers: { Accept: "application/json" } }));
+                    showFeedback(translate("logoutSuccess"), translate("logoutSuccess"), "success");
+                    setTimeout(() => location.reload(), 600);
+                } catch (error) {
+                    showFeedback(translate("requestError"), error.message || translate("requestError"), "error");
+                }
+            }
+
+            document.querySelectorAll("[data-lang-switch]").forEach((button) => button.addEventListener("click", () => {
+                state.language = button.dataset.langSwitch;
+                applyTranslations();
+            }));
+            document.querySelectorAll("[data-scroll-target]").forEach((button) => button.addEventListener("click", () => document.querySelector(button.dataset.scrollTarget)?.scrollIntoView({ behavior: "smooth", block: "center" })));
+            const discountSearch = byId("discount-search");
+            if (discountSearch) discountSearch.addEventListener("input", (event) => { state.search = event.target.value; renderDiscounts(); });
+            const activeOnly = byId("active-only");
+            if (activeOnly) activeOnly.addEventListener("change", (event) => { state.activeOnly = event.target.checked; renderDiscounts(); });
+            const refreshButton = byId("refresh-button");
+            if (refreshButton) refreshButton.addEventListener("click", async () => { if (byId("discount-table-body")) await loadDiscounts(); showFeedback(translate("refreshSuccess"), translate("syncUpdated")); });
+            const refreshMessagesButton = byId("refresh-messages-button");
+            if (refreshMessagesButton) refreshMessagesButton.addEventListener("click", async () => { await loadMessages(); showFeedback(translate("refreshSuccess"), translate("syncUpdated")); });
+            const discountTableBody = byId("discount-table-body");
+            if (discountTableBody) discountTableBody.addEventListener("click", (event) => {
+                const button = event.target.closest("button[data-action='delete-discount']");
+                if (button) {
+                    const id = button.dataset.id;
+                    if (id) deleteDiscountCode(id);
+                }
+            });
+            const discountForm = byId("discount-form");
+            if (discountForm) discountForm.addEventListener("submit", (event) => { event.preventDefault(); submitJson(event.currentTarget, "/api/v1/discount/create", "POST", "createSuccess"); });
+            const messageCreateForm = byId("message-create-form");
+            if (messageCreateForm) messageCreateForm.addEventListener("submit", (event) => { event.preventDefault(); submitJson(event.currentTarget, "/api/v1/messages/create", "POST", "messageCreated"); });
+            const messageUpdateForm = byId("message-update-form");
+            if (messageUpdateForm) messageUpdateForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                const id = byId("update-message-id").value.trim();
+                if (!id) { showFeedback(translate("requestError"), translate("messageIdLabel"), "error"); return; }
+                submitJson(event.currentTarget, `/api/v1/messages/update/${encodeURIComponent(id)}`, "PUT", "messageUpdated");
+            });
+            const messageDeleteForm = byId("message-delete-form");
+            if (messageDeleteForm) messageDeleteForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                const id = byId("delete-message-id").value.trim();
+                if (!id) { showFeedback(translate("requestError"), translate("messageIdLabel"), "error"); return; }
+                submitJson(event.currentTarget, `/api/v1/messages/delete/${encodeURIComponent(id)}`, "DELETE", "messageDeleted");
+            });
+            const locationButton = byId("location-button");
+            if (locationButton) locationButton.addEventListener("click", runLocationProbe);
+            const eligibilityButton = byId("eligibility-button");
+            if (eligibilityButton) eligibilityButton.addEventListener("click", runEligibilityProbe);
+
+            const productForm = byId("product-form");
+            if (productForm) productForm.addEventListener("submit", (event) => { event.preventDefault(); submitJson(event.currentTarget, "/api/v1/products/create", "POST", "productCreateSuccess"); });
+            const refreshProductsButton = byId("refresh-products-button");
+            if (refreshProductsButton) refreshProductsButton.addEventListener("click", async () => { await loadProducts(); showFeedback(translate("refreshSuccess"), translate("syncUpdated")); });
+            const productsTableBody = byId("products-table-body");
+            if (productsTableBody) productsTableBody.addEventListener("click", async (event) => {
+                const updateButton = event.target.closest("button[data-action='update-product']");
+                const deleteButton = event.target.closest("button[data-action='delete-product']");
+                if (updateButton) {
+                    const id = updateButton.dataset.id;
+                    const newName = prompt("Enter new product name:");
+                    if (!newName) return;
+                    const newPrice = prompt("Enter new price:", "0");
+                    if (newPrice === null) return;
+                    try {
+                        await readJson(await fetch(`/api/v1/products/update/${encodeURIComponent(id)}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json", Accept: "application/json" },
+                            body: JSON.stringify({ name: newName, price: newPrice })
+                        }));
+                        showFeedback(translate("productUpdateSuccess"), translate("productUpdateSuccess"), "success");
+                        await loadProducts();
+                    } catch (error) {
+                        showFeedback(translate("requestError"), error.message || translate("requestError"), "error");
+                    }
+                }
+                if (deleteButton) {
+                    const id = deleteButton.dataset.id;
+                    if (!confirm(translate("productDeleteConfirm"))) return;
+                    try {
+                        await readJson(await fetch(`/api/v1/products/delete/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Accept: "application/json" } }));
+                        showFeedback(translate("productDeleteSuccess"), translate("productDeleteSuccess"), "success");
+                        await loadProducts();
+                    } catch (error) {
+                        showFeedback(translate("requestError"), error.message || translate("requestError"), "error");
+                    }
+                }
+            });
+
+            const cartForm = byId("cart-form");
+            if (cartForm) cartForm.addEventListener("submit", (event) => { event.preventDefault(); submitJson(event.currentTarget, "/api/v1/cart/add", "POST", "cartAddSuccess"); });
+            const refreshCartButton = byId("refresh-cart-button");
+            if (refreshCartButton) refreshCartButton.addEventListener("click", async () => { await loadCart(); showFeedback(translate("refreshSuccess"), translate("syncUpdated")); });
+            const clearCartButton = byId("clear-cart-button");
+            if (clearCartButton) clearCartButton.addEventListener("click", async () => {
+                if (!confirm(translate("cartClearConfirm"))) return;
+                try {
+                    const sessionInput = byId("cart-session");
+                    const session_id = sessionInput ? sessionInput.value.trim() : "";
+                    if (!session_id) {
+                        showFeedback(translate("requestError"), translate("cartSessionLabel"), "error");
+                        return;
+                    }
+                    await readJson(await fetch("/api/v1/cart/clear", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ session_id }) }));
+                    showFeedback(translate("cartClearSuccess"), translate("cartClearSuccess"), "success");
+                    await loadCart();
+                } catch (error) {
+                    showFeedback(translate("requestError"), error.message || translate("requestError"), "error");
+                }
+            });
+            const cartTableBody = byId("cart-table-body");
+            if (cartTableBody) cartTableBody.addEventListener("click", async (event) => {
+                const button = event.target.closest("button[data-action='delete-cart-item']");
+                if (button) {
+                    const id = button.dataset.id;
+                    if (!confirm(translate("cartDeleteConfirm"))) return;
+                    readJson(await fetch(`/api/v1/cart/delete/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Accept: "application/json" } })).then(() => {
+                        showFeedback(translate("cartDeleteSuccess"), translate("cartDeleteSuccess"), "success");
+                        loadCart();
+                    }).catch((error) => showFeedback(translate("requestError"), error.message || translate("requestError"), "error"));
+                }
+            });
+            const cartSearchInput = byId("cart-search");
+            if (cartSearchInput) cartSearchInput.addEventListener("input", (event) => {
+                const term = event.target.value.trim().toLowerCase();
+                const filtered = state.cartItems.filter((item) => String(item.session_id || "").toLowerCase().includes(term));
+                state.cartItemsFiltered = filtered;
+                renderCartFiltered();
+            });
+
+            function renderCartFiltered() {
+                const body = byId("cart-table-body");
+                if (!body) return;
+                const items = state.cartItemsFiltered || state.cartItems;
+                if (!items.length) {
+                    body.innerHTML = `<tr><td class="empty-state" colspan="7"><i class="ti ti-database-off" aria-hidden="true"></i><span>${escapeHtml(translate("noCartItems"))}</span></td></tr>`;
+                    return;
+                }
+                body.innerHTML = items.map((item) => {
+                    const product = item.product || {};
+                    const subtotal = (product.price || 0) * (item.quantity || 0);
+                    return `<tr>
+                        <td class="muted-cell">${escapeHtml(item.id)}</td>
+                        <td>${escapeHtml(item.session_id)}</td>
+                        <td>${escapeHtml(product.name || "—")}</td>
+                        <td>${escapeHtml(item.quantity)}</td>
+                        <td>${escapeHtml(product.price || 0)}</td>
+                        <td>${escapeHtml(subtotal)}</td>
+                        <td><button class="icon-button danger" type="button" data-action="delete-cart-item" data-id="${item.id}" aria-label="${escapeHtml(translate("cartDeleteSuccess"))}"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+                    </tr>`;
+                }).join("");
+            }
+            const loginForm = byId("login-form");
+            if (loginForm) loginForm.addEventListener("submit", submitLogin);
+            const logoutButton = byId("logout-button");
+            if (logoutButton) logoutButton.addEventListener("click", submitLogout);
+
+            try { applyTranslations(); } catch (e) { console.error("Translation error:", e); }
+            setTimeout(() => {
+                try {
+                    if (byId("discount-table-body")) loadDiscounts();
+                    if (byId("messages-table-body")) loadMessages();
+                    if (byId("products-table-body")) loadProducts();
+                    if (byId("cart-table-body")) loadCart();
+                } catch (e) {
+                    console.error("Data load error:", e);
+                }
+            }, 0);
+            } catch (error) {
+                console.error("Admin panel init error:", error);
+            }
+        })();
+    </script>
+</body>
+</html>
