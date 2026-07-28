@@ -10,23 +10,16 @@ const Product = sequelize.define(
       autoIncrement: true,
     },
     name: {
-      type: DataTypes.STRING(300),
+      type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
+    },
+    image: {
+      type: DataTypes.STRING(300),
+      allowNull: true,
     },
     price: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      validate: {
-        min: 0,
-      },
-    },
-    image: {
-      type: DataTypes.STRING(300),
-      allowNull: false,
-      defaultValue: "",
     },
     is_stock: {
       type: DataTypes.BOOLEAN,

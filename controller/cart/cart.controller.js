@@ -1,11 +1,25 @@
 const CartItem = require('../../model/Cart');
 const Product = require('../../model/Product');
+const { getCache, setCache, deleteCache } = require('../../config/redis');
+
+const CACHE_TTL = 60;
 
 const getCartItems = async (req, res) => {
     try {
         const { session_id } = req.query;
         const where = {};
         if (session_id) where.session_id = session_id;
+
+        const cacheKey = session_id ? `cart:session:${session_id}` : 'cart:all';
+        const cached = await getCache(cacheKey);
+        if (cached) {
+            return res.status(200).json({
+                success: true,
+                count: cached.length,
+                data: cached,
+                cached: true
+            });
+        }
 
         const cartItems = await CartItem.findAll({
             where,
@@ -15,6 +29,8 @@ const getCartItems = async (req, res) => {
                 required: true
             }]
         });
+
+        await setCache(cacheKey, cartItems, CACHE_TTL);
 
         return res.status(200).json({
             success: true,
@@ -55,6 +71,8 @@ const addToCart = async (req, res) => {
             await existingItem.update({
                 quantity: existingItem.quantity + (quantity || 1)
             });
+            await deleteCache(`cart:session:${session_id}`);
+            await deleteCache('cart:all');
             return res.status(200).json({
                 success: true,
                 data: existingItem
@@ -66,6 +84,9 @@ const addToCart = async (req, res) => {
             product_id,
             quantity: quantity || 1
         });
+
+        await deleteCache(`cart:session:${session_id}`);
+        await deleteCache('cart:all');
 
         return res.status(201).json({
             success: true,
@@ -103,6 +124,9 @@ const updateCartItem = async (req, res) => {
 
         await cartItem.update({ quantity });
 
+        await deleteCache(`cart:session:${cartItem.session_id}`);
+        await deleteCache('cart:all');
+
         return res.status(200).json({
             success: true,
             data: cartItem
@@ -129,7 +153,12 @@ const deleteCartItem = async (req, res) => {
             });
         }
 
+        const sessionId = cartItem.session_id;
+
         await cartItem.destroy();
+
+        await deleteCache(`cart:session:${sessionId}`);
+        await deleteCache('cart:all');
 
         return res.status(200).json({
             success: true,
@@ -156,6 +185,9 @@ const clearCart = async (req, res) => {
         }
 
         await CartItem.destroy({ where: { session_id } });
+
+        await deleteCache(`cart:session:${session_id}`);
+        await deleteCache('cart:all');
 
         return res.status(200).json({
             success: true,

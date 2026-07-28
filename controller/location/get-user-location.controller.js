@@ -1,4 +1,7 @@
 const geoip = require("geoip-lite");
+const { getCache, setCache } = require('../../config/redis');
+
+const CACHE_TTL = 300;
 
 const resolveIp = (req) => {
     const forwarded = req.headers["x-forwarded-for"];
@@ -28,15 +31,36 @@ const getUserLocation = async (req, res) => {
             });
         }
 
+        if (location.country !== 'IR') {
+            return res.status(403).json({
+                success: false,
+                message: 'لطفا سرویس VPN خودر را خاموش کنید'
+            });
+        }
+
+        const cacheKey = `location:${ip}`;
+        const cached = await getCache(cacheKey);
+        if (cached) {
+            return res.status(200).json({
+                success: true,
+                data: cached,
+                cached: true
+            });
+        }
+
+        const locationData = {
+            ip: ip || rawIp,
+            country: location.country,
+            region: location.region,
+            city: location.city,
+            coordinates: location.ll
+        };
+
+        await setCache(cacheKey, locationData, CACHE_TTL);
+
         return res.status(200).json({
             success: true,
-            data: {
-                ip: ip || rawIp,
-                country: location.country,
-                region: location.region,
-                city: location.city,
-                coordinates: location.ll
-            }
+            data: locationData
         });
 
     } catch (error) {

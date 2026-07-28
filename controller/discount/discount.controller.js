@@ -1,6 +1,9 @@
 const axios = require('axios');
 const api = require('../../config/apis/location/location-api');
 const Discount = require('../../model/Discount');
+const { getCache, setCache, deleteCache } = require('../../config/redis');
+
+const CACHE_TTL = 60;
 
 const setDiscountByLocation = async (req, res) => {
     try {
@@ -30,7 +33,20 @@ const setDiscountByLocation = async (req, res) => {
 
 const getAllDiscountCodes = async (req, res) => {
     try {
+        const cacheKey = 'discounts:all';
+        const cached = await getCache(cacheKey);
+        if (cached) {
+            return res.status(200).json({
+                success: true,
+                count: cached.length,
+                data: cached,
+                cached: true
+            });
+        }
+
         const discounts = await Discount.findAll();
+        await setCache(cacheKey, discounts, CACHE_TTL);
+
         return res.status(200).json({
             success: true,
             count: discounts.length,
@@ -61,6 +77,8 @@ const createDiscountCode = async (req, res) => {
             percent,
             user_per_use: user_per_use || 1
         });
+
+        await deleteCache('discounts:all');
 
         return res.status(201).json({
             success: true,
@@ -95,6 +113,8 @@ const deleteDiscountCode = async (req, res) => {
         }
 
         await discount.destroy();
+
+        await deleteCache('discounts:all');
 
         return res.status(200).json({
             success: true,

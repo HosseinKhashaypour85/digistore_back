@@ -2,20 +2,14 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db/mysql");
 
 const Admin = sequelize.define('admins-auth', {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
     email: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
+        primaryKey: true,
     },
     password: {
         type: DataTypes.STRING,
     },
-}, { tableName: 'admins-auth', timestamps: false , createdAt : false , });
+}, { tableName: 'admins-auth', id: false , timestamps : false});
 
 console.log("Admin model rawAttributes:", JSON.stringify(Admin.rawAttributes));
 

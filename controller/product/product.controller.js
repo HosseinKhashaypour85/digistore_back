@@ -1,4 +1,7 @@
 const Product = require('../../model/Product');
+const { getCache, setCache, deleteCache } = require('../../config/redis');
+
+const CACHE_TTL = 60;
 
 const serializeProduct = (product) => {
     const value = product && typeof product.toJSON === 'function' ? product.toJSON() : product;
@@ -15,7 +18,20 @@ const serializeProduct = (product) => {
 
 const getAllProducts = async (req, res) => {
     try {
+        const cacheKey = 'products:all';
+        const cached = await getCache(cacheKey);
+        if (cached) {
+            return res.status(200).json({
+                success: true,
+                count: cached.length,
+                data: cached,
+                cached: true
+            });
+        }
+
         const products = await Product.findAll();
+        await setCache(cacheKey, products.map(serializeProduct), CACHE_TTL);
+
         return res.status(200).json({
             success: true,
             count: products.length,
@@ -32,7 +48,7 @@ const getAllProducts = async (req, res) => {
 
 const createProduct = async (req, res) => {
     try {
-        const { name, price, image_url, stock } = req.body;
+        const { name, price, image_url, stock, description, category } = req.body;
 
         if (!name || price === undefined || price === null) {
             return res.status(400).json({
@@ -45,8 +61,12 @@ const createProduct = async (req, res) => {
             name,
             price,
             image: image_url || "",
-            is_stock: stock === undefined ? true : Number(stock) > 0
+            is_stock: stock === undefined ? true : Number(stock) > 0,
+            description: description || '',
+            category: category || '',
         });
+
+        await deleteCache('products:all');
 
         return res.status(201).json({
             success: true,
@@ -64,7 +84,7 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, price, image_url, stock } = req.body;
+        const { name, price, image_url, stock, description, category } = req.body;
 
         const product = await Product.findByPk(id);
 
@@ -80,8 +100,12 @@ const updateProduct = async (req, res) => {
         if (price !== undefined) updates.price = price;
         if (image_url !== undefined) updates.image = image_url;
         if (stock !== undefined) updates.is_stock = Number(stock) > 0;
+        if (description !== undefined) updates.description = description;
+        if (category !== undefined) updates.category = category;
 
         await product.update(updates);
+
+        await deleteCache('products:all');
 
         return res.status(200).json({
             success: true,
@@ -110,6 +134,8 @@ const deleteProduct = async (req, res) => {
         }
 
         await product.destroy();
+
+        await deleteCache('products:all');
 
         return res.status(200).json({
             success: true,

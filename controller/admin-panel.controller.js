@@ -74,7 +74,7 @@ const adminLogin = async (req, res) => {
             });
         }
 
-        return res.redirect('/admin');
+        return res.redirect('/api/admin');
     } catch (error) {
         return res.status(500).json({
             success: false,

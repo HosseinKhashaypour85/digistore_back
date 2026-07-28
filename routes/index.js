@@ -6,10 +6,15 @@ const { createAppMessage, updateAppMessage, deleteAppMessage, getAllAppMessages 
 const { getAllProducts, createProduct, updateProduct, deleteProduct } = require('../controller/product/product.controller');
 const { getCartItems, addToCart, updateCartItem, deleteCartItem, clearCart } = require('../controller/cart/cart.controller');
 const { getAdminPanel, adminLogin, adminLogout } = require('../controller/admin-panel.controller');
+const { registerUser, requestOtp, verifyOtp } = require('../controller/user/user.controller');
 
 router.get('/admin', getAdminPanel);
 router.post('/admin/login', adminLogin);
 router.post('/admin/logout', adminLogout);
+
+router.post('/v1/user/register', registerUser);
+router.post('/v1/user/request-otp', requestOtp);
+router.post('/v1/user/verify-otp', verifyOtp);
 
 router.get('/v1/location/get' , getUserLocation);
 router.get('/v1/discount/location/get' , setDiscountByLocation);
