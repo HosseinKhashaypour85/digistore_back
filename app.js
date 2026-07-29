@@ -3,7 +3,6 @@ const cors = require('cors');
 const path = require('path');
 const morgan = require('morgan');
 const sequelize = require("./config/db/mysql");
-const { connectRedis } = require('./config/redis');
 
 require("dotenv").config();
 const PORT = process.env.PORT || 3001;
@@ -28,20 +27,6 @@ app.use('/api', routes);
     } catch (error) {
 
         console.log("❌ Database Error:", error.message);
-
-    }
-})();
-
-(async () => {
-    try {
-
-        await connectRedis();
-
-        console.log("✅ Redis Connected");
-
-    } catch (error) {
-
-        console.log("❌ Redis Error:", error.message);
 
     }
 })();

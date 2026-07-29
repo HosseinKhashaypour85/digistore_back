@@ -1,7 +1,4 @@
 const Product = require('../../model/Product');
-const { getCache, setCache, deleteCache } = require('../../config/redis');
-
-const CACHE_TTL = 60;
 
 const serializeProduct = (product) => {
     const value = product && typeof product.toJSON === 'function' ? product.toJSON() : product;
@@ -18,19 +15,7 @@ const serializeProduct = (product) => {
 
 const getAllProducts = async (req, res) => {
     try {
-        const cacheKey = 'products:all';
-        const cached = await getCache(cacheKey);
-        if (cached) {
-            return res.status(200).json({
-                success: true,
-                count: cached.length,
-                data: cached,
-                cached: true
-            });
-        }
-
         const products = await Product.findAll();
-        await setCache(cacheKey, products.map(serializeProduct), CACHE_TTL);
 
         return res.status(200).json({
             success: true,
@@ -65,8 +50,6 @@ const createProduct = async (req, res) => {
             description: description || '',
             category: category || '',
         });
-
-        await deleteCache('products:all');
 
         return res.status(201).json({
             success: true,
@@ -105,8 +88,6 @@ const updateProduct = async (req, res) => {
 
         await product.update(updates);
 
-        await deleteCache('products:all');
-
         return res.status(200).json({
             success: true,
             data: serializeProduct(product)
@@ -134,8 +115,6 @@ const deleteProduct = async (req, res) => {
         }
 
         await product.destroy();
-
-        await deleteCache('products:all');
 
         return res.status(200).json({
             success: true,

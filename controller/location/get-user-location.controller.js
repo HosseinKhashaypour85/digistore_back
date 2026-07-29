@@ -1,7 +1,4 @@
 const geoip = require("geoip-lite");
-const { getCache, setCache } = require('../../config/redis');
-
-const CACHE_TTL = 300;
 
 const resolveIp = (req) => {
     const forwarded = req.headers["x-forwarded-for"];
@@ -18,10 +15,40 @@ const normalizeIp = (ip) => {
     return ip;
 };
 
+const isPrivateIp = (ip) => {
+    if (!ip) return true;
+    if (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1") return true;
+    if (ip.startsWith("10.")) return true;
+    if (ip.startsWith("192.168.")) return true;
+    if (ip.startsWith("172.")) {
+        const parts = ip.split(".");
+        if (parts.length === 4) {
+            const secondOctet = parseInt(parts[1], 10);
+            if (secondOctet >= 16 && secondOctet <= 31) return true;
+        }
+    }
+    return false;
+};
+
 const getUserLocation = async (req, res) => {
     try {
         const rawIp = resolveIp(req);
         const ip = normalizeIp(rawIp);
+
+        if (isPrivateIp(ip)) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    ip: ip || rawIp,
+                    country: "IR",
+                    region: "Tehran",
+                    city: "Tehran",
+                    coordinates: [35.6892, 51.3890],
+                    private: true
+                }
+            });
+        }
+
         const location = geoip.lookup(ip);
 
         if (!location) {
@@ -38,29 +65,15 @@ const getUserLocation = async (req, res) => {
             });
         }
 
-        const cacheKey = `location:${ip}`;
-        const cached = await getCache(cacheKey);
-        if (cached) {
-            return res.status(200).json({
-                success: true,
-                data: cached,
-                cached: true
-            });
-        }
-
-        const locationData = {
-            ip: ip || rawIp,
-            country: location.country,
-            region: location.region,
-            city: location.city,
-            coordinates: location.ll
-        };
-
-        await setCache(cacheKey, locationData, CACHE_TTL);
-
         return res.status(200).json({
             success: true,
-            data: locationData
+            data: {
+                ip: ip || rawIp,
+                country: location.country,
+                region: location.region,
+                city: location.city,
+                coordinates: location.ll
+            }
         });
 
     } catch (error) {
