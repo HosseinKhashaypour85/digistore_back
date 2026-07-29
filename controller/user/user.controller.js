@@ -59,7 +59,7 @@ const registerUser = async (req, res) => {
         if (!name || !last_name || !nation_id || !phone_number) {
             return res.status(400).json({
                 success: false,
-                message: 'name, last_name, nation_id, and phone_number are required',
+                message: 'لطفا تمامی موارد خواسته شده رو کامل کنید',
             });
         }
 
@@ -67,7 +67,7 @@ const registerUser = async (req, res) => {
         if (existingUser) {
             return res.status(409).json({
                 success: false,
-                message: 'User with this nation_id already exists',
+                message: 'کاربر با این کد ملی وجود دارد',
             });
         }
 

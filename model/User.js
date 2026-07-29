@@ -28,7 +28,7 @@ const User = sequelize.define(
       unique: true,
     },
     nation_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(20),
       allowNull: false,
       unique: true,
     },

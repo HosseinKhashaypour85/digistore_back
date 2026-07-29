@@ -32,6 +32,7 @@ const isPrivateIp = (ip) => {
 
 const getUserLocation = async (req, res) => {
     try {
+        res.set('Cache-Control', 'no-store');
         const rawIp = resolveIp(req);
         const ip = normalizeIp(rawIp);
 
