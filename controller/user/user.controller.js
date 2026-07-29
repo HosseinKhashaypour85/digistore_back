@@ -1,7 +1,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
 const User = require('../../model/User');
-const { IranPayamak_Api, IranPayamak_Api_Key, IranPayamak_Pattern_Code, IranPayamak_Line_Number } = require('../../config/apis/user/iranpayamak-api');
+const { IranPayamak_Api, IranPayamak_Api_Key, IranPayamak_Pattern_Code, IranPayamak_Pattern_Code_Register, IranPayamak_Line_Number } = require('../../config/apis/user/iranpayamak-api');
 
 const otpStore = new Map();
 
@@ -17,12 +17,12 @@ function formatPhoneNumberForSms(phone) {
     return `0${phone}`;
 }
 
-function sendOtpViaIranPayamak(phone_number, otp) {
+function sendOtpViaIranPayamak(phone_number, otp, patternCode = IranPayamak_Pattern_Code) {
     const recipient = formatPhoneNumberForSms(phone_number);
     return axios.post(
         `${IranPayamak_Api}/ws/v1/sms/pattern`,
         {
-            code: IranPayamak_Pattern_Code,
+            code: patternCode,
             recipient,
             attributes: { code: otp },
             line_number: IranPayamak_Line_Number,
@@ -71,27 +71,19 @@ const registerUser = async (req, res) => {
             });
         }
 
-        let username = String(nation_id);
-
-        const iranpayamakPayload = {
-            plan_id: plan_id || 3,
-            person_type: person_type || 'personal',
-            username,
-            first_name: name,
-            last_name,
-            national_code: String(nation_id),
-            mobile: phone_number,
-            discount_code: discount_code || '',
-            seller_id: seller_id || null,
-            should_notify_user: should_notify_user !== undefined ? should_notify_user : true,
-            redirect_url: redirect_url || null,
-        };
+        let username = `hossein_${String(nation_id)}`;
 
         let iranpayamakResponse;
         try {
             iranpayamakResponse = await axios.post(
-                `${IranPayamak_Api}/ws/v1/auth/register`,
-                iranpayamakPayload,
+                `${IranPayamak_Api}/ws/v1/sms/pattern`,
+                {
+                    code: IranPayamak_Pattern_Code_Register,
+                    recipient: formatPhoneNumberForSms(phone_number),
+                    attributes: { code: '' },
+                    line_number: IranPayamak_Line_Number,
+                    number_format: 'english',
+                },
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -106,12 +98,16 @@ const registerUser = async (req, res) => {
                 (iranpayamakError.response?.data?.message && /username|نام کاربری/i.test(iranpayamakError.response.data.message));
             if (hasUsernameError) {
                 username = `${name}_${nation_id}_${crypto.randomInt(100, 999)}`;
-                iranpayamakPayload.username = username;
-                iranpayamakPayload.national_code = String(nation_id);
 
                 iranpayamakResponse = await axios.post(
-                    `${IranPayamak_Api}/ws/v1/auth/register`,
-                    iranpayamakPayload,
+                    `${IranPayamak_Api}/ws/v1/sms/pattern`,
+                    {
+                        code: IranPayamak_Pattern_Code_Register,
+                        recipient: formatPhoneNumberForSms(phone_number),
+                        attributes: { code: '' },
+                        line_number: IranPayamak_Line_Number,
+                        number_format: 'english',
+                    },
                     {
                         headers: {
                             'Content-Type': 'application/json',
